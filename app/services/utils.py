@@ -18,7 +18,7 @@ def search_contacts(db: Session, name: str = None, email: str = None):
     return query.all()
 
 # 🎉 Фільтр: контакти з днями народження у найближчі 7 днів (ІГНОРУЄ РІК)
-def get_upcoming_birthdays(db: Session):
+def get_upcoming_birthdays(db: Session, user_id: int):
     today = date.today()
     next_week = today + timedelta(days=7)
 
@@ -26,6 +26,7 @@ def get_upcoming_birthdays(db: Session):
     print(f"📅 Шукаємо дні народження з {today.day}-{today.month} до {next_week.day}-{next_week.month} (ІГНОРУЄМО РІК)")
 
     contacts = db.query(Contact).filter(
+        Contact.user_id == user_id,  # фільтрація по user_id
         ((func.extract('month', Contact.birthday) == today.month) & (func.extract('day', Contact.birthday) >= today.day)) |
         ((func.extract('month', Contact.birthday) == next_week.month) & (func.extract('day', Contact.birthday) <= next_week.day))
     ).all()
