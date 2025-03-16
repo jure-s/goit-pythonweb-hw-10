@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
+from fastapi_limiter.depends import RateLimiter  # Додаємо обмеження запитів
 
 from app.services.auth import (
     create_access_token,
@@ -68,8 +69,8 @@ def signup(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
 
     return new_user
 
-# 🔹 Ендпоїнт для отримання поточного користувача
-@router.get("/me", response_model=schemas.UserResponse)
+# 🔹 Ендпоїнт для отримання поточного користувача з обмеженням запитів
+@router.get("/me", response_model=schemas.UserResponse, dependencies=[Depends(RateLimiter(times=5, seconds=60))])
 def read_users_me(current_user: schemas.UserResponse = Depends(get_current_user)):
     return current_user
 

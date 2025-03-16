@@ -1,12 +1,15 @@
 import sys
 import os
+import asyncio
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
-from app.routes import contacts, users, auth  # 👈 Додаємо auth
+from fastapi_limiter.depends import RateLimiter
+from app.config import init_limiter  # Додаємо ініціалізацію Rate Limiter
+from app.routes import contacts, users, auth  # Додаємо auth
 
 app = FastAPI(title="Contacts API with Authentication")
 
@@ -36,3 +39,8 @@ def root():
 @app.get("/secure-endpoint/")
 def secure_endpoint(token: str = Depends(oauth2_scheme)):
     return {"message": "Token is valid"}
+
+# Ініціалізація Rate Limiter при старті сервера
+@app.on_event("startup")
+async def startup():
+    await init_limiter()
