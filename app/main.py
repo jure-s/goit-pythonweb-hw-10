@@ -8,6 +8,9 @@ from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from fastapi_limiter.depends import RateLimiter
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
 from app.config import init_limiter  # Ініціалізація Rate Limiter
 from app.routes import contacts, users, auth  # Додаємо auth
 
@@ -30,6 +33,9 @@ app.include_router(contacts.router)
 app.include_router(users.router)
 app.include_router(auth.router)
 
+# 🔹 Підключення статичних файлів (включаючи favicon)
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
 # 🔹 Головна сторінка API
 @app.get("/")
 def root():
@@ -39,6 +45,11 @@ def root():
 @app.get("/secure-endpoint/")
 def secure_endpoint(token: str = Depends(oauth2_scheme)):
     return {"message": "Token is valid"}
+
+# 🔹 Повернення favicon
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse("app/static/favicon.svg")
 
 # 🔹 Ініціалізація Rate Limiter при старті сервера
 @app.on_event("startup")
