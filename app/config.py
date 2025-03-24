@@ -38,3 +38,9 @@ from app.database import models
 async def init_limiter():
     redis = await aioredis.from_url(REDIS_URL)
     await FastAPILimiter.init(redis)
+
+# Шлях до папки з аватарами
+AVATAR_STORAGE_PATH = os.getenv("AVATAR_STORAGE_PATH", "app/static/avatars")
+
+# Створюємо директорію для збереження аватарів, якщо вона ще не існує
+os.makedirs(AVATAR_STORAGE_PATH, exist_ok=True)

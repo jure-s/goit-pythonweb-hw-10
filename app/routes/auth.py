@@ -2,11 +2,12 @@ import os
 from datetime import datetime, timedelta
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 from fastapi_limiter.depends import RateLimiter  # Додаємо обмеження запитів
+import shutil
 
 from app.services.auth import (
     create_access_token,
@@ -20,6 +21,7 @@ from app.services.auth import (
 from app.database import crud, schemas
 from app.services.email import send_email  # Імпорт функції відправки email
 from dotenv import load_dotenv
+from app.config import AVATAR_STORAGE_PATH
 
 # Завантаження змінних середовища
 load_dotenv()
@@ -100,3 +102,23 @@ def verify_email(token: str, db: Session = Depends(get_db)):
         return user
     except JWTError:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid token")
+
+# 🔹 Ендпоїнт для завантаження аватара користувача
+@router.post("/avatar", response_model=schemas.UserResponse)
+def upload_avatar(
+    file: UploadFile = File(...),
+    current_user: schemas.UserResponse = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Ендпоїнт для завантаження аватара користувача"""
+    file_extension = file.filename.split(".")[-1]
+    avatar_filename = f"user_{current_user.id}.{file_extension}"
+    avatar_path = os.path.join(AVATAR_STORAGE_PATH, avatar_filename)
+
+    with open(avatar_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    avatar_url = f"/static/avatars/{avatar_filename}"
+    updated_user = crud.update_avatar(db, current_user, avatar_url)
+    
+    return updated_user

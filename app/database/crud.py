@@ -37,6 +37,13 @@ def get_user_by_id(db: Session, user_id: int):
     """Отримання користувача за ID"""
     return db.query(User).filter(User.id == user_id).first()
 
+def update_avatar(db: Session, user: User, avatar_path: str):
+    """Оновлення шляху до аватара користувача."""
+    user.avatar_url = avatar_path
+    db.commit()
+    db.refresh(user)
+    return user
+
 # 🔹 Операції з контактами (Contact)
 def create_contact(db: Session, contact: ContactCreate, user_id: int):
     """Створення нового контакту"""
@@ -79,4 +86,3 @@ def delete_contact(db: Session, contact_id: int, user_id: int):
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Перевіряє, чи введений пароль відповідає збереженому хешу."""
     return verify_password_service(plain_password, hashed_password)  # Викликаємо правильну функцію
-
